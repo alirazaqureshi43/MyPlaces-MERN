@@ -4,44 +4,25 @@ import Input from "../../shared/components/FormELements/Input";
 import Button from "../../shared/components/FormELements/Button/Button";
 import Card from "../../shared/components/UIElements/Card";
 import { useForm } from "../../hooks/form-hook";
-
+import { useNavigate } from "react-router-dom";
 import "./PlaceForm.css";
 import {
   VALIDATOR_REQUIRE,
   VALIDATOR_MINLENGTH,
 } from "../../shared/util/validators";
-const DUMMY_PLACES = [
-  {
-    id: "p1",
-    title: "Empire State Building",
-    description: "One of the most famous sky scrapers in the world!",
-    imageUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/NYC_Empire_State_Building.jpg/640px-NYC_Empire_State_Building.jpg",
-    address: "20 W 34th St, New York, NY 10001",
-    location: {
-      lat: 40.7484405,
-      lng: -73.9878584,
-    },
-    creator: "u1",
-  },
-  {
-    id: "p2",
-    title: "Empire State Building",
-    description: "One of the most famous sky scrapers in the world!",
-    imageUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/NYC_Empire_State_Building.jpg/640px-NYC_Empire_State_Building.jpg",
-    address: "20 W 34th St, New York, NY 10001",
-    location: {
-      lat: 40.7484405,
-      lng: -73.9878584,
-    },
-    creator: "u2",
-  },
-];
+import {useHttpClient} from '../../hooks/http-hook'
+import { AuthContext } from '../../context/auth-context'
+import { useContext } from "react";
+import LoadingSpinner from '../../shared/components/UIElements/LoadingSpinner'
+import ErrorModal from '../../shared/components/UIElements/ErrorModal'
+
 
 const UpdatePlace = () => {
   const placeId = useParams().placeId;
-  const [isLoading, setIsLoading] = useState(true)
+  const navigate = useNavigate()
+  const auth = useContext(AuthContext)
+  const { isLoading, error, sendRequest, clearError } = useHttpClient()
+  const [userPlace, setUserPlace] = useState([])
   const [formState, inputHandler,setFormData]= useForm({
       title:{
         value: '',
@@ -54,43 +35,62 @@ const UpdatePlace = () => {
    
   }, false)
 
-  
-  const identifiedPlace = DUMMY_PLACES.find((p) => p.id === placeId);
-
 useEffect(() => {
-    if (identifiedPlace) {
+  const fetchPlace = async()=>{
+    try {
+      const data = await sendRequest(`http://localhost:5000/api/places/${placeId}` )
+      setUserPlace(data.place)
       setFormData(
         {
           title: {
-            value: identifiedPlace.title,
+            value: data.place.title,
             isValid: true,
           },
           description: {
-            value: identifiedPlace.description,
+            value: data.place.description,
             isValid: true,
           },
         },
         true
       );
+    } catch (err) {
+      
     }
-    setIsLoading(false)
-  }, [setFormData, identifiedPlace]);
+  }
+
+  fetchPlace()
+  
+  }, [sendRequest,placeId,setFormData]);
 
 
-  const placeUpdateSubmit = (e) => {
+
+  const placeUpdateSubmit = async(e) => {
     e.preventDefault()
-    console.log(formState.inputs)
+    const body = {
+      title: formState.inputs.title.value,
+      description: formState.inputs.description.value
+    }
+    try{
+      await sendRequest(`http://localhost:5000/api/places/${placeId}`, 'PATCH', JSON.stringify(body),
+      {
+        'Content-Type': 'application/json',
+        Authorization : `Bearer ${auth.token}`
+      })
+      navigate('/' + auth.userId + '/places')
+    }catch(err){
+
+    }
   }
 
   if(isLoading){
     return(
       <div className="center">
-        <h2>loading</h2>
+        <LoadingSpinner/>
       </div>
     )
   }
 
-  if(!identifiedPlace){
+  if(!userPlace && !error){
     return(
       <div className="center">
         <Card>
@@ -100,6 +100,11 @@ useEffect(() => {
     )
   }
   return (
+    <>
+    <ErrorModal error={error} onClear={clearError}/>
+    {
+      !isLoading && userPlace &&
+   
     <form className="place-form" onSubmit={placeUpdateSubmit}>
     <Input
       id="title"
@@ -125,6 +130,8 @@ useEffect(() => {
      
      <Button type='submit' disabled={!formState.isValid}>Add Place</Button>
     </form>
+     }
+    </>
   );
 };
 

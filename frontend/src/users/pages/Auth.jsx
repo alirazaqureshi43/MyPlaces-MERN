@@ -8,13 +8,15 @@ import { AuthContext } from '../../context/auth-context'
 import { useNavigate } from 'react-router-dom'
 import LoadingSpinner from '../../shared/components/UIElements/LoadingSpinner'
 import ErrorModal from '../../shared/components/UIElements/ErrorModal'
+import ImageUpload from '../../shared/components/FormELements/ImageUpload'
+import { useHttpClient } from '../../hooks/http-hook'
 import './Auth.css'
 const Auth = () => {
     const navigate = useNavigate();
     const auth = useContext(AuthContext)
     const [isLoginMode, setIsLoginMode] = useState(true)
-    const [isLoading, setIsLoading] = useState(false)
-    const [isError, setIsError] = useState()
+    const { isLoading, error, sendRequest, clearError } = useHttpClient()
+
  const [formState, inputHandler,setFormData] = useForm({
     email:{
         value:'',
@@ -28,64 +30,35 @@ const Auth = () => {
 
  const authSubmitHandler = async(e) =>{
     e.preventDefault()
-    setIsLoading(true)
-
+  
     if(isLoginMode){
           const body = {
             email: formState.inputs.email.value,
             password: formState.inputs.password.value
         }
-        console.log(body)
-        try{
-            setIsError(null)
-            const res = await fetch('http://localhost:5000/api/users/login', {
-                 method: 'POST',
-                 headers:{
-                    'Content-Type': 'application/json',
-                 },
-                 body: JSON.stringify(body)
-             })
-             const data = await res.json()
-             if(!res.ok){ 
-                throw new Error(data.message)
-             }
-             console.log(data)
-             setIsLoading(false)
-             auth.login();
-             navigate('/u1/places');
-        }catch(err){
-            console.log(err)
-            setIsLoading(false)
-            setIsError(err.message || 'Something went wrong, please try again.')
+        try {
+            const data = await sendRequest('http://localhost:5000/api/users/login', 'POST',JSON.stringify(body) ,
+            {
+               'Content-Type': 'application/json',
+            })
+        auth.login(data.userId, data.token);
+        navigate(`/${data.userId}/places`); 
+        } catch (err) {
+            
         }
-    }else{
-        const body = {
-            name: formState.inputs.name.value,
-            email: formState.inputs.email.value,
-            password: formState.inputs.password.value
-        }
-        console.log(body)
+          
+    }else{        
         try{
-            setIsError(null)
-            const res = await fetch('http://localhost:5000/api/users/signup', {
-                 method: 'POST',
-                 headers:{
-                    'Content-Type': 'application/json',
-                 },
-                 body: JSON.stringify(body)
-             })
-             const data = await res.json()
-             if(!res.ok){ 
-                throw new Error(data.message)
-             }
-             console.log(data)
-             setIsLoading(false)
-             auth.login();
-             navigate('/u1/places');
+            const formData = new FormData()
+            formData.append('name', formState.inputs.name.value)
+            formData.append('email', formState.inputs.email.value)
+            formData.append('password', formState.inputs.password.value)
+            formData.append('image', formState.inputs.image.value)
+            const data =  await sendRequest('http://localhost:5000/api/users/signup', 'POST',formData)
+             auth.login(data.userId);
+             navigate(`/${data.userId}/places`); 
         }catch(err){
-            console.log(err)
-            setIsLoading(false)
-            setIsError(err.message || 'Something went wrong, please try again.')
+            
         }
     }
    
@@ -95,7 +68,8 @@ const Auth = () => {
     if(!isLoginMode){
         setFormData({
             ...formState.inputs,
-            name: undefined
+            name: undefined,
+            image: undefined
         }, formState.inputs.email.isValid && formState.inputs.password.isValid)
     }else{
         setFormData({
@@ -103,25 +77,26 @@ const Auth = () => {
             name:{
                 value:'',
                 isValid: false
+            },
+            image:{
+                value:null,
+                isValid: false
             }
         }, false)
     }
     setIsLoginMode(!isLoginMode)
  }
 
- const errorHandler = ()=>{
-    setIsError(null)
- }
-
   return (
     <>
-    <ErrorModal error={isError} onClear={errorHandler}/>
+    <ErrorModal error={error} onClear={clearError}/>
     <Card className='authentication'>
         {isLoading && <LoadingSpinner asOverlay/>}
         <h2>Login Required</h2>
         <hr />
         <form onSubmit={authSubmitHandler}>
             {!isLoginMode &&
+            <>
               <Input 
               element='input'
               id='name'
@@ -131,6 +106,8 @@ const Auth = () => {
               errorText='Please enter a name'
               onInput={inputHandler}
               />
+              <ImageUpload id='image' center onInput={inputHandler} errorText='Please provide an image' />
+              </>
             }
             <Input 
             element='input'
