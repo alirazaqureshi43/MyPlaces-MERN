@@ -12,7 +12,7 @@ const UserPlaces = () => {
   useEffect(() => {
     const fetchPlaces = async()=>{
       try {
-        const data = await sendRequest(`http://localhost:5000/api/places/user/${userId}` )
+        const data = await sendRequest(`${import.meta.env.VITE_BACKEND_URL}/places/user/${userId}` )
         setUserPlaces(data.places)
       } catch (err) {
         

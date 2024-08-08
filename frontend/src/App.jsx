@@ -11,7 +11,6 @@ import { useAuth } from "./hooks/auth-hook";
 
 const App =()=> {
   const {login, logout, token, userId}  = useAuth()
-
   return (
     <AuthContext.Provider value={{isLoggedIn: !!token, token: token, userId: userId, login:login, logout:logout}}>
       <Router>

@@ -37,7 +37,7 @@ const Auth = () => {
             password: formState.inputs.password.value
         }
         try {
-            const data = await sendRequest('http://localhost:5000/api/users/login', 'POST',JSON.stringify(body) ,
+            const data = await sendRequest(`${import.meta.env.VITE_BACKEND_URL}/users/login`, 'POST',JSON.stringify(body) ,
             {
                'Content-Type': 'application/json',
             })
@@ -54,7 +54,7 @@ const Auth = () => {
             formData.append('email', formState.inputs.email.value)
             formData.append('password', formState.inputs.password.value)
             formData.append('image', formState.inputs.image.value)
-            const data =  await sendRequest('http://localhost:5000/api/users/signup', 'POST',formData)
+            const data =  await sendRequest(`${import.meta.env.VITE_BACKEND_URL}/users/signup`, 'POST',formData)
              auth.login(data.userId);
              navigate(`/${data.userId}/places`); 
         }catch(err){

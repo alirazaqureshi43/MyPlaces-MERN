@@ -36,7 +36,7 @@ app.use((error, req, res, next) => {
     res.json({ message: error.message || 'An unknown error occurred!' })
 })
 mongoose
-.connect("mongodb+srv://aliMern:qureshi786@cluster0.hvxrnp5.mongodb.net/places?retryWrites=true&w=majority&appName=Cluster0")
+.connect(`mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.hvxrnp5.mongodb.net/places?retryWrites=true&w=majority&appName=Cluster0`)
 .then(()=>{
 app.listen(port)
 })

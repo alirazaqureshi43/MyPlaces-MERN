@@ -38,7 +38,7 @@ const UpdatePlace = () => {
 useEffect(() => {
   const fetchPlace = async()=>{
     try {
-      const data = await sendRequest(`http://localhost:5000/api/places/${placeId}` )
+      const data = await sendRequest(`${import.meta.env.VITE_BACKEND_URL}/places/${placeId}` )
       setUserPlace(data.place)
       setFormData(
         {
@@ -71,7 +71,7 @@ useEffect(() => {
       description: formState.inputs.description.value
     }
     try{
-      await sendRequest(`http://localhost:5000/api/places/${placeId}`, 'PATCH', JSON.stringify(body),
+      await sendRequest(`${import.meta.env.VITE_BACKEND_URL}/places/${placeId}`, 'PATCH', JSON.stringify(body),
       {
         'Content-Type': 'application/json',
         Authorization : `Bearer ${auth.token}`
