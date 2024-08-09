@@ -15,6 +15,7 @@ dotenv.config()
 app.use(bodyParser.json())
 app.use(cors({ origin: 'http://localhost:5173', methods:["GET", "POST", "PUT", "PATCH", "DELETE"] }));
 app.use('/uploads/images', express.static(path.join('uploads', 'images')))
+app.use(express.static(path.join('public')))
 app.use((req,res,next)=>{
     res.setHeader('Access-Control-Allow-Origin', '*')
     res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization')
@@ -23,9 +24,12 @@ app.use((req,res,next)=>{
 })
 app.use('/api/places', placesRoutes)
 app.use('/api/users', usersRoutes)
-app.use((req, res, next) => {
-    const error = new HttpError('Could not find this route.', 404)
-    throw error
+// app.use((req, res, next) => {
+//     const error = new HttpError('Could not find this route.', 404)
+//     throw error
+// })
+app.use((req, res, next)=>{
+    res.sendFile(path.ressolve(__dirname, 'public', 'index.html'))
 })
 app.use((error, req, res, next) => {
     if(req.file){
